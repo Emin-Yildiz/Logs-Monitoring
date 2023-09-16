@@ -1,0 +1,82 @@
+version: "3"
+
+services:
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.3.3
+    container_name: elasticsearch_springboot
+    environment:
+      - bootstrap.memory_lock
+      - ES_JAVA_OPTS
+      - discovery.type
+      - xpack.security.enabled
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - elastic
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.3.3
+    container_name: kibana_springboot
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_URL
+      - ELASTICSEARCH_HOSTS
+    depends_on:
+      - elasticsearch
+    networks:
+      - elastic
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.3.3
+    container_name: logstash_springboot
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+    ports:
+      - "5044:5044"
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+      - "9600:9600"
+    environment:
+      - LS_JAVA_OPTS
+    networks:
+      - elastic
+    depends_on:
+      - elasticsearch
+
+  postgres:
+    image: postgres:latest
+    container_name: database
+    restart: ${RESTART_POLICY}
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
+      - POSTGRES_HOST
+    ports:
+      - 5432:5432
+    volumes:
+      - db_data:/var/lib/postgresql/data:Z
+
+  pgadmin:
+    container_name: pgadminemotion
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL
+      - PGADMIN_DEFAULT_PASSWORD
+    ports:
+      - "5050:80"
+
+networks:
+  elastic:
+    driver: bridge
+
+volumes:
+  db_data:
+
+  elasticsearch_data:
+    driver: local
