@@ -1,0 +1,40 @@
+version: '3.7'
+services:
+
+  jaeger:
+    container_name: jaeger
+    image: jaegertracing/all-in-one:latest
+    restart: always
+    ports:
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "16686:16686"
+      - "4318:4318"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+
+  postgres:
+    image: postgres:latest
+    container_name: database
+    restart: always
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=user
+      - POSTGRES_HOST=postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - db_data:/var/lib/postgresql/data:Z
+
+  pgadmin:
+    container_name: pgadminemotion
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=root
+    ports:
+      - "5050:80"
+
+volumes:
+  db_data:
